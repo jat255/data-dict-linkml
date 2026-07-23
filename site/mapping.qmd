@@ -1,0 +1,73 @@
+---
+title: "Mapping & Rules"
+---
+
+## How LinkML constructs land in data-dict
+
+The generator reads the schema with `SchemaView` and emits the relational part
+of it. Here's what maps to what:
+
+| LinkML | data-dict.yaml | Notes |
+|--------|----------------|-------|
+| `schema.name` / `title` / `description` | top-level `name` / `label` / `description` | straight across |
+| `schema.version` | `version.number` | |
+| a concrete `class` | a `tables[]` entry | one class, one table |
+| an `abstract` / `mixin` class | nothing | its slots get flattened into descendants |
+| a `tree_root` class | nothing | it's a document wrapper, not a table |
+| a `slot` | a `columns[]` entry | |
+| `slot.range` | column `type` | see the type table below |
+| `slot.identifier: true` | `primary_key` + `number(id)` | also hoisted to the top of the table |
+| `slot.required: true` | `required` constraint | |
+| `slot.unit.ucum_code` | column `units` (and `number(quantity)`) | |
+| enum `permissible_values` | column `values` | as a `{code: label}` map when there are labels |
+| `minimum_value` / `maximum_value` | `range: [min, max]` | range types only |
+| slot `examples:` | column `examples: [...]` | coerced to the column type; `slot_usage` gives per-table values |
+| a slot whose range is a class | `foreign_key` column + a `relationships[]` entry | the relational/object seam |
+
+### Types
+
+| LinkML range | data-dict `type` |
+|--------------|------------------|
+| `integer` / `float` / `double` / `decimal` | `number`, or `number(quantity)` with a unit, or `number(id)` for an identifier or FK |
+| `string` | `string` |
+| `boolean` | `boolean` |
+| `date` | `date` |
+| `datetime` | `datetime` |
+| an enum | `enum` |
+| a class reference | `number(id)` + `foreign_key` |
+
+## The data-dict type rules
+
+data-dict wants exactly one "representation" on each column, and which one
+depends on the type. I couldn't find this written down as a spec, so I read it
+out of the validator source,
+[`validate_spec.rs`](https://github.com/tidyverse/data-dict/blob/main/crates/data-dict/src/validate_spec.rs)
+(the `RANGE_TYPES` list and the match arm that follows). It comes down to:
+
+| Column type | What it must carry | Can LinkML supply it without data? |
+|-------------|--------------------|-------------------------------------|
+| `enum` | `values` | Yes, from `permissible_values` |
+| `boolean` | none of values/range/examples | Yes, trivially |
+| `number(ordinal)`, `number(quantity)`, `date`, `datetime` | `range: [min, max]` | Yes, if both bounds are declared |
+| `string`, `number`, `number(id)` | a non-empty `examples` list | Yes, from slot `examples:` (otherwise you get a flagged hole) |
+
+Two things the validator corrected for me early:
+
+- `range` is a two-item array, `[min, max]`, not a `{min, max}` object. That was
+  my first bug.
+- An empty `examples: []` is not allowed, the list has to have something in it.
+  And `boolean` columns aren't supposed to have any of the three at all.
+
+## What doesn't make it across
+
+The generator logs everything it drops. Two of those drops are permanent,
+because data-dict has no concept to hold them:
+
+- URIs, prefixes, and ontology mappings. There's no semantic layer in data-dict,
+  so LinkML's `class_uri`, `slot_uri`, and `mappings` just go away.
+- Inheritance. data-dict is flat. An `abstract` or `mixin` class produces no
+  table; its slots are copied down into each concrete class that used them
+  (`class_induced_slots()`), and the fact that they shared a parent is lost.
+
+Everything else, types, constraints, enums, units, bounds, examples, and the
+relationships, comes through intact.

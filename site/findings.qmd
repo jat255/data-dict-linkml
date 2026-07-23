@@ -1,0 +1,63 @@
+---
+title: "Findings"
+---
+
+## The thing I got wrong
+
+My first assumption was that data-dict needed the actual data to fill in
+`examples` and value ranges, and that a schema on its own could never produce a
+complete dictionary. I even built a version of the generator that read Parquet
+files to fill those fields.
+
+That was wrong. LinkML already has slots for all of it: `examples:` for sample
+values, `minimum_value` and `maximum_value` for bounds, `permissible_values` for
+enums. People just tend to leave `examples:` off because it's optional. Once the
+schema actually carries those annotations, the generator produces a valid
+dictionary with no data involved. Reading the data is a convenience for
+auto-filling the annotations you didn't write, nothing more.
+
+So there's no hard dependency in either direction. You can annotate the LinkML up
+front and generate a complete dictionary before any data exists, or leave the
+annotations thin and let a later pass over the data fill them in. Either works.
+
+## What actually gets lost
+
+Two things never come across, and both are on purpose.
+
+The first is anything semantic. data-dict has no URIs, no prefixes, no ontology
+mappings, so LinkML's `class_uri`, `slot_uri`, and `mappings` simply vanish.
+
+The second is inheritance. data-dict is flat. An abstract class like
+`NamedThing` produces no table of its own; its fields get copied into every
+class that inherited them, and there's nothing left to say those classes were
+related. The data is all still there, but the abstraction isn't.
+
+Neither of these is a gap in LinkML. data-dict deliberately doesn't model them,
+which is part of why it's a lighter format.
+
+## The foreign key
+
+The one spot where the two formats genuinely think differently is the foreign
+key. LinkML treats a link as a reference between objects: the `territory` slot's
+range is the `Territory` class. data-dict treats it as an FK column plus a
+relationship with a join expression. The generator does the translation, turning
+one class-valued slot into a `number(id)` column and a `relationships[]` entry.
+
+This is also why the repo carries the data twice. `survey.data.yaml` is the
+nested, object-shaped version that LinkML validates. The Parquet files are the
+flat, columnar version that data-dict validates. Same rows, two shapes.
+
+## Is data-dict a reasonable LinkML target?
+
+I think so, with a few strings attached:
+
+- Keep it to the relational part of the schema: flat classes, scalar and enum
+  slots, FK references. A deeply nested object graph has no clean table form.
+- Treat it as one-way. The semantic and inheritance losses mean you can't
+  reconstruct the LinkML from the data-dict, so don't try to round-trip.
+- Expect the modeler to write `examples:` and full bounds, or to accept a data
+  pass later, so every column satisfies data-dict's representation rule.
+
+Within those limits, a single LinkML schema gives you a dictionary that both
+documents and validates the delivered dataset. That's a useful last-mile
+companion to the code and schemas LinkML already generates.

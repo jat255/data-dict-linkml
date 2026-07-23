@@ -1,0 +1,9 @@
+site/_site/
+site/.quarto/
+__pycache__/
+
+**/*.quarto_ipynb
+
+# stray Quarto render output for the root README
+/README.html
+/README_files/

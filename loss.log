@@ -1,0 +1,4 @@
+
+# ---- lossiness log (stderr) ----
+# LOSS: schema prefixes/URIs dropped (data-dict has no URI concept)
+# LOSS: class 'NamedThing': abstract/mixin flattened away (inheritance lost)

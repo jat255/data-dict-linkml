@@ -1,0 +1,154 @@
+id: https://example.org/otters
+name: otters
+title: Otter Territory Survey
+description: >-
+  A small relational model tracking otters and the territories they occupy.
+  Deliberately exercises inheritance, an enum, units, and a foreign-key
+  reference so the data-dict generator has something to strain against.
+version: 1.2.0
+license: MIT
+default_range: string
+default_prefix: otters
+
+prefixes:
+  otters: https://example.org/otters/
+  linkml: https://w3id.org/linkml/
+  UCUM: https://units-of-measurement.org/
+
+imports:
+  - linkml:types
+
+subsets:
+  survey_core:
+    description: Fields collected on every field survey visit.
+
+# ---- Enums ---------------------------------------------------------------
+enums:
+  SpeciesEnum:
+    description: Otter species recorded by the survey.
+    permissible_values:
+      lutra_lutra:
+        description: Eurasian otter
+      enhydra_lutris:
+        description: Sea otter
+      pteronura_brasiliensis:
+        description: Giant otter
+
+# ---- Classes -------------------------------------------------------------
+classes:
+  # Abstract base — its slots must be FLATTENED into each concrete table.
+  NamedThing:
+    abstract: true
+    description: A thing with a stable identifier and a human-readable name.
+    slots:
+      - id
+      - name
+
+  Territory:
+    is_a: NamedThing
+    description: A geographic area monitored by the survey.
+    slots:
+      - area
+      - protected
+    # slot_usage lets the SAME shared slot carry table-specific examples --
+    # proof that LinkML expresses per-column specimens without any data.
+    slot_usage:
+      id:
+        examples:
+          - value: "1"
+          - value: "2"
+          - value: "3"
+      name:
+        examples:
+          - value: Riverbend
+          - value: Kelp Cove
+          - value: Amazon Reach
+
+  Otter:
+    is_a: NamedThing
+    description: An individual otter observed during the survey.
+    slots:
+      - species
+      - weight
+      - age_years
+      - territory        # class-valued -> becomes a foreign key + relationship
+    slot_usage:
+      id:
+        examples:
+          - value: "101"
+          - value: "102"
+          - value: "103"
+      name:
+        examples:
+          - value: Ollie
+          - value: Sandy
+          - value: Rio
+
+  # Document root: a container holding the tables. It is NOT a table itself,
+  # so the data-dict generator skips tree_root classes. It exists so LinkML
+  # has a natural root to validate a whole-survey data instance against.
+  Survey:
+    tree_root: true
+    description: One otter-survey document, holding all tables.
+    attributes:
+      territories:
+        description: All territories in this survey.
+        range: Territory
+        multivalued: true
+        inlined_as_list: true
+      otters:
+        description: All otters observed in this survey.
+        range: Otter
+        multivalued: true
+        inlined_as_list: true
+
+# ---- Slots ---------------------------------------------------------------
+slots:
+  id:
+    identifier: true
+    range: integer
+    description: Surrogate primary key.
+    in_subset:
+      - survey_core
+  name:
+    required: true
+    description: Human-readable label.
+    in_subset:
+      - survey_core
+  species:
+    range: SpeciesEnum
+    required: true
+    description: Recorded species.
+  weight:
+    range: float
+    unit:
+      ucum_code: kg
+    minimum_value: 0
+    maximum_value: 45
+    description: Body mass at observation.
+  age_years:
+    range: integer
+    minimum_value: 0
+    description: Estimated age in whole years.
+    examples:
+      - value: "3"
+      - value: "5"
+      - value: "7"
+  area:
+    range: float
+    unit:
+      ucum_code: km2
+    minimum_value: 0
+    maximum_value: 50
+    description: Territory area.
+  protected:
+    range: boolean
+    description: Whether the territory has legal protection.
+  territory:
+    range: Territory
+    required: true
+    description: The territory in which the otter was observed.
+    examples:
+      - value: "1"
+      - value: "2"
+      - value: "3"

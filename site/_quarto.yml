@@ -1,0 +1,30 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "LinkML → data-dict"
+  description: "Generating tidyverse data-dict.yaml from a LinkML schema."
+  navbar:
+    left:
+      - href: index.qmd
+        text: Overview
+      - href: mapping.qmd
+        text: Mapping & Rules
+      - href: walkthrough.qmd
+        text: Validation Walkthrough
+      - href: findings.qmd
+        text: Findings
+    right:
+      - icon: github
+        href: https://github.com/tidyverse/data-dict
+        text: data-dict
+      - text: LinkML
+        href: https://linkml.io/
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-copy: true
+    code-overflow: wrap

@@ -1,0 +1,36 @@
+# A whole-survey data instance conforming to the LinkML schema (Survey root).
+# Note the object shape: territories/otters are nested lists, and an otter's
+# `territory` is a by-identifier reference to a Territory -- the same fact the
+# data-dict expresses as a foreign_key column + relationship.
+territories:
+  - id: 1
+    name: Riverbend
+    area: 12.5
+    protected: true
+  - id: 2
+    name: Kelp Cove
+    area: 3.2
+    protected: false
+  - id: 3
+    name: Amazon Reach
+    area: 40.0
+    protected: true
+otters:
+  - id: 101
+    name: Ollie
+    species: lutra_lutra
+    weight: 8.1
+    age_years: 3
+    territory: 1
+  - id: 102
+    name: Sandy
+    species: enhydra_lutris
+    weight: 30.0
+    age_years: 7
+    territory: 2
+  - id: 103
+    name: Rio
+    species: pteronura_brasiliensis
+    weight: 26.0
+    age_years: 5
+    territory: 3

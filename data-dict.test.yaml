@@ -1,0 +1,107 @@
+$version: 0.1.0
+$learn_more: http://data-dict.tidyverse.org/
+name: otters
+label: Otter Territory Survey
+description: A small relational model tracking otters and the territories they occupy.
+  Deliberately exercises inheritance, an enum, units, and a foreign-key reference
+  so the data-dict generator has something to strain against.
+tables:
+- name: Territory
+  description: A geographic area monitored by the survey.
+  source:
+    parquet: territory.parquet
+  columns:
+  - name: id
+    description: Surrogate primary key.
+    type: number(id)
+    constraints:
+    - primary_key
+    - required
+    examples:
+    - 1
+    - 2
+    - 3
+  - name: area
+    description: Territory area.
+    type: number(quantity)
+    units: km2
+    range:
+    - 0
+    - 50
+  - name: protected
+    description: Whether the territory has legal protection.
+    type: boolean
+  - name: name
+    description: Human-readable label.
+    type: string
+    constraints:
+    - required
+    examples:
+    - Riverbend
+    - Kelp Cove
+    - Amazon Reach
+- name: Otter
+  description: An individual otter observed during the survey.
+  source:
+    parquet: otter.parquet
+  columns:
+  - name: id
+    description: Surrogate primary key.
+    type: number(id)
+    constraints:
+    - primary_key
+    - required
+    examples:
+    - 101
+    - 102
+    - 103
+  - name: species
+    description: Recorded species.
+    type: enum
+    constraints:
+    - required
+    values:
+      lutra_lutra: Eurasian otter
+      enhydra_lutris: Sea otter
+      pteronura_brasiliensis: Giant otter
+  - name: weight
+    description: Body mass at observation.
+    type: number(quantity)
+    units: kg
+    range:
+    - 0
+    - 45
+  - name: age_years
+    description: Estimated age in whole years.
+    type: number
+    examples:
+    - 3
+    - 5
+    - 7
+  - name: territory
+    description: The territory in which the otter was observed.
+    type: number(id)
+    constraints:
+    - foreign_key
+    - required
+    examples:
+    - 1
+    - 2
+    - 3
+  - name: name
+    description: Human-readable label.
+    type: string
+    constraints:
+    - required
+    examples:
+    - Ollie
+    - Sandy
+    - Rio
+relationships:
+- join: Otter.territory = Territory.id
+  cardinality: many-to-one
+  description: Each Otter references a Territory.
+glossary:
+  survey_core: Fields collected on every field survey visit.
+version:
+  number: 1.2.0

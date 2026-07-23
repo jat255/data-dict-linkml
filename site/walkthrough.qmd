@@ -1,0 +1,89 @@
+---
+title: "Validation Walkthrough"
+---
+
+This is the actual run. I've run every command here; the expected output is in
+the comments. Run it all from the project directory.
+
+::: {.callout-note}
+## You'll need
+- [`uv`](https://docs.astral.sh/uv/), which gives you `uvx` and `uv run`
+- the data-dict CLI: `cargo install --git https://github.com/tidyverse/data-dict data-dict-cli`
+:::
+
+## Part A: LinkML
+
+Check the model, then check some data against it.
+
+```bash
+# lint the schema
+uvx --from linkml linkml-lint otters.linkml.yaml
+#   ✓ No problems found
+
+# validate the schema against the LinkML metamodel
+uvx --from linkml linkml-validate otters.linkml.yaml
+#   No issues found
+
+# validate a data instance against the schema
+uvx --from linkml linkml-validate -s otters.linkml.yaml -C Survey survey.data.yaml
+#   No issues found
+```
+
+The third command works on the nested form in `survey.data.yaml`. It's checking
+enum values, numeric bounds, and that every otter's `territory: <n>` resolves to
+a real `Territory`.
+
+## Part B: generate the dictionary
+
+```bash
+# portable version
+uv run gen_data_dict.py otters.linkml.yaml > data-dict.yaml
+
+# version with source: pointers, for the data checks
+uv run gen_data_dict.py otters.linkml.yaml --emit-source > data-dict.test.yaml
+```
+
+`--emit-source` adds `source: {parquet: <table>.parquet}` to each table. That's a
+path, not data, so generation still reads nothing.
+
+The stderr log for this schema is short:
+
+```
+# LOSS: schema prefixes/URIs dropped (data-dict has no URI concept)
+# LOSS: class 'NamedThing': abstract/mixin flattened away (inheritance lost)
+```
+
+No unfilled columns. Every column got the representation its type requires,
+straight from the schema.
+
+## Part C: data-dict
+
+```bash
+data-dict validate-spec data-dict.yaml        # structure, no data needed
+data-dict validate-meta data-dict.test.yaml   # column names and types vs Parquet
+data-dict validate-data data-dict.test.yaml   # values vs constraints
+```
+
+Each one returns `ok`.
+
+## Make sure it can fail
+
+A passing run doesn't mean much unless a broken one fails. Push a value out of
+bounds and check:
+
+```bash
+# set a weight above 45 in make_fixtures.py, then:
+uv run make_fixtures.py
+data-dict validate-data data-dict.test.yaml   # now it flags the bad row
+```
+
+## What the run shows
+
+The two toolchains are checking the same facts, just in different shapes, and
+they agree:
+
+| Fact | LinkML (nested) | data-dict (flat) |
+|------|-----------------|-------------------|
+| Species is one of three values | enum in `survey.data.yaml` | `values` on `species` |
+| Weight is between 0 and 45 | `minimum_value` / `maximum_value` | `range: [0, 45]` |
+| An otter belongs to a territory | `territory: 1` reference | `foreign_key` plus a join |

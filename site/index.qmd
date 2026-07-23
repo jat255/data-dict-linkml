@@ -1,0 +1,48 @@
+---
+title: "LinkML → data-dict"
+subtitle: "Generating a tidyverse data-dict.yaml from a LinkML schema"
+---
+
+## The question
+
+[LinkML](https://linkml.io/) is schema-first: you write one model and generate a
+pile of things from it, JSON Schema, SHACL, OWL, Pydantic, SQL DDL, and so on.
+The tidyverse [`data-dict`](https://data-dict.tidyverse.org/) project is a
+lighter YAML format for documenting and validating a dataset, with a Rust CLI to
+check it.
+
+The two formats describe a lot of the same stuff: tables, columns, types,
+constraints, relationships. So the obvious thing to try is generating one from
+the other. Could `data-dict.yaml` just be another LinkML output target?
+
+## Short answer
+
+Yes. The generator in this repo (`gen_data_dict.py`) reads a LinkML schema and
+writes a valid `data-dict.yaml` from it, without touching any data. The result
+passes all three data-dict validators, and the same dataset validates under both
+LinkML and data-dict, each in its own shape.
+
+## The shape of it
+
+```
+otters.linkml.yaml            source of truth (LinkML)
+        │
+        │  linkml-lint / linkml-validate     (check the model and a data instance)
+        │
+        ▼  gen_data_dict.py
+data-dict.yaml                generated, portable
+data-dict.test.yaml           generated with --emit-source (adds source: pointers)
+        │
+        │  data-dict validate-spec / -meta / -data
+        ▼
+     all green
+```
+
+## Where to go next
+
+- [Mapping & Rules](mapping.qmd) covers how each LinkML construct lands in
+  data-dict, plus the type rules I had to dig out of the data-dict validator.
+- [Validation Walkthrough](walkthrough.qmd) is the actual run, command by
+  command.
+- [Findings](findings.qmd) is what I took away from it, including the thing I got
+  wrong on the first pass.
