@@ -2,7 +2,7 @@
 
 **Rendered docs:** <https://jat255.github.io/data-dict-linkml/>
 
-This is an experiment find out whether a valid [`data-dict.yaml`](https://data-dict.tidyverse.org/)
+This is an experiment to find out whether a valid [`data-dict.yaml`](https://data-dict.tidyverse.org/)
 file could be generated from a [LinkML](https://linkml.io/) schema, the same way
 LinkML already emits JSON Schema, SHACL, Pydantic classes, etc. 
 There's a small generator here, `gen_data_dict.py`, that
