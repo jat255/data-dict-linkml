@@ -11,6 +11,11 @@
 Emits the *relational projection* of a LinkML schema as a data-dict.yaml
 ($version 0.1.0).
 
+Built against the data-dict CLI 0.0.1, tidyverse/data-dict commit
+c146baec42fceb360252d7670663bddb1f6dcfc7 (installed from main; no tagged
+releases yet). data-dict is early and still changing, so the S07 type rules
+below and this output may not hold on newer commits.
+
 Each data-dict column type wants a specific representation (per data-dict's
 validate_spec.rs, rule S07), and LinkML supplies each one:
 

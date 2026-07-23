@@ -9,7 +9,19 @@ Run it all from the project directory.
 ::: {.callout-note}
 ## You'll need
 - [`uv`](https://docs.astral.sh/uv/), which gives you `uvx` and `uv run`
-- the data-dict CLI: `cargo install --git https://github.com/tidyverse/data-dict data-dict-cli`
+- the data-dict CLI, pinned to the commit this was built against:
+  ```bash
+  cargo install --git https://github.com/tidyverse/data-dict \
+      --rev c146baec42fceb360252d7670663bddb1f6dcfc7 data-dict-cli
+  ```
+:::
+
+::: {.callout-important}
+Built against **data-dict CLI `0.0.1`**, commit
+[`c146bae`](https://github.com/tidyverse/data-dict/commit/c146baec42fceb360252d7670663bddb1f6dcfc7)
+(from `main`; no tagged releases yet). Generated files target spec
+`$version: 0.1.0`. data-dict is still changing, so newer commits may behave
+differently.
 :::
 
 ## Part A: LinkML

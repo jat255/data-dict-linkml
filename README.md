@@ -10,6 +10,14 @@ reads a LinkML schema and generates a valid `data-dict.yaml` schema.
 The output passes all three of data-dict's validators, and the same
 dataset checks out under both toolchains.
 
+> [!IMPORTANT]
+> **Built against data-dict CLI `0.0.1`, commit
+> [`c146bae`](https://github.com/tidyverse/data-dict/commit/c146baec42fceb360252d7670663bddb1f6dcfc7)**
+> (installed from `main`; data-dict has no tagged releases yet). The generated
+> files target data-dict spec **`$version: 0.1.0`**. data-dict is early and
+> still changing, so the type rules, validator behavior, and this generator's
+> output may not hold on newer commits.
+
 ## Files
 
 | File | What it is |
@@ -28,9 +36,10 @@ dataset checks out under both toolchains.
 
 - [`uv`](https://docs.astral.sh/uv/). It runs the generator and the LinkML CLI
   tools (through `uvx`), so there's nothing to install by hand.
-- The `data-dict` CLI. There's no release yet, so build it from source (see [data-dict's docs](https://data-dict.tidyverse.org/) for details):
+- The `data-dict` CLI. There's no release yet, so build it from source (see [data-dict's docs](https://data-dict.tidyverse.org/) for details). Pinning the commit this repo was built against keeps the results reproducible:
   ```bash
-  cargo install --git https://github.com/tidyverse/data-dict data-dict-cli
+  cargo install --git https://github.com/tidyverse/data-dict \
+      --rev c146baec42fceb360252d7670663bddb1f6dcfc7 data-dict-cli
   ```
 - [Quarto](https://quarto.org/), if you want to render the site.
 

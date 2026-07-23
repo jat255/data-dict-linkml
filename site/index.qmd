@@ -3,6 +3,14 @@ title: "LinkML → data-dict"
 subtitle: "Generating a tidyverse data-dict.yaml from a LinkML schema"
 ---
 
+::: {.callout-important}
+Built against **data-dict CLI `0.0.1`**, commit
+[`c146bae`](https://github.com/tidyverse/data-dict/commit/c146baec42fceb360252d7670663bddb1f6dcfc7)
+(installed from `main`; data-dict has no tagged releases yet). Generated files
+target data-dict spec `$version: 0.1.0`. The format is early and still evolving,
+so results may differ on newer commits.
+:::
+
 ## The question
 
 [LinkML](https://linkml.io/) is schema-first: you write one model and generate a
