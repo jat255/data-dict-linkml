@@ -114,7 +114,7 @@ error[D05]: A foreign key's values must all appear in the primary key it referen
 One caveat worth knowing: `validate-data` (data-dict 0.0.1) checks
 required-not-null (D01), uniqueness (D02), enum membership (D04), and
 foreign-key integrity (D05/D06), but 
-as of Juluy 22, 2026 it does *not* compare numeric values
+as of July 22, 2026 it does *not* compare numeric values
 against a column's `range`. The `range: [0, 45]` on `weight` is metadata that
 `validate-spec` requires the column to *carry*; the Parquet values are never
 checked against it. 
