@@ -2,8 +2,9 @@
 title: "Validation Walkthrough"
 ---
 
-This is the actual run. I've run every command here; the expected output is in
-the comments. Run it all from the project directory.
+This is the actual example with code to run. 
+The expected output is in the comments. 
+Run it all from the project directory.
 
 ::: {.callout-note}
 ## You'll need
@@ -17,15 +18,15 @@ Check the model, then check some data against it.
 
 ```bash
 # lint the schema
-uvx --from linkml linkml-lint otters.linkml.yaml
+uvx linkml lint otters.linkml.yaml
 #   ✓ No problems found
 
 # validate the schema against the LinkML metamodel
-uvx --from linkml linkml-validate otters.linkml.yaml
+uvx linkml validate otters.linkml.yaml
 #   No issues found
 
 # validate a data instance against the schema
-uvx --from linkml linkml-validate -s otters.linkml.yaml -C Survey survey.data.yaml
+uvx linkml validate -s otters.linkml.yaml -C Survey survey.data.yaml
 #   No issues found
 ```
 
@@ -68,19 +69,47 @@ Each one returns `ok`.
 
 ## Make sure it can fail
 
-A passing run doesn't mean much unless a broken one fails. Push a value out of
-bounds and check:
+This example demonstrates data validation
+failing. This can be seen by modifying `make_fixtures.py`
+temporarily to associate an otter with a territory that 
+doesn't exist — the `Territory` ids are `1`–`3`, so set
+the otter `territory` column to something like
+`[1, 2, 30]` in `make_fixtures.py` — then
+re-check:
 
 ```bash
-# set a weight above 45 in make_fixtures.py, then:
 uv run make_fixtures.py
-data-dict validate-data data-dict.test.yaml   # now it flags the bad row
+data-dict validate-data data-dict.test.yaml   # now D05 flags the orphan row
 ```
+
+```
+-- territory schema --
+Schema({'area': Float64, 'protected': Boolean, 'id': Int64, 'name': String})
+
+-- otter schema --
+Schema({'species': String, 'weight': Float64, 'age_years': Int64, 'territory': Int64, 'id': Int64, 'name': String})
+error[D05]: A foreign key's values must all appear in the primary key it references.
+  --> data-dict.test.yaml:83:7
+   |
+43 | - name: Otter
+...
+79 |   - name: territory
+...
+83 |     - foreign_key
+   |       ^^^^^^^^^^^ has 1 value not found in `Territory.id` (`30`; row: 3)
+```
+
+One caveat worth knowing: `validate-data` (data-dict 0.0.1) checks
+required-not-null (D01), uniqueness (D02), enum membership (D04), and
+foreign-key integrity (D05/D06), but 
+as of Juluy 22, 2026 it does *not* compare numeric values
+against a column's `range`. The `range: [0, 45]` on `weight` is metadata that
+`validate-spec` requires the column to *carry*; the Parquet values are never
+checked against it. 
 
 ## What the run shows
 
-The two toolchains are checking the same facts, just in different shapes, and
-they agree:
+The two toolchains express the same facts, just in different shapes:
 
 | Fact | LinkML (nested) | data-dict (flat) |
 |------|-----------------|-------------------|

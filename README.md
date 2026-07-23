@@ -16,7 +16,7 @@ dataset checks out under both toolchains.
 | `gen_data_dict.py` | The generator. LinkML schema in, `data-dict.yaml` out. Schema only, no data. |
 | `data-dict.yaml` | Generated dictionary, portable (no data-location pointers). |
 | `data-dict.test.yaml` | Same thing generated with `--emit-source`, which adds a `source:` pointer per table so the data checks can find the files. |
-| `survey.data.yaml` | A data instance in LinkML's nested/object shape, for `linkml-validate`. |
+| `survey.data.yaml` | A data instance in LinkML's nested/object shape, for `linkml validate`. |
 | `otter.parquet`, `territory.parquet` | The same rows in columnar form, for data-dict. |
 | `make_fixtures.py` | Rebuilds the Parquet files. |
 | `loss.log` | What the generator dropped on the way over. |
@@ -26,7 +26,7 @@ dataset checks out under both toolchains.
 
 - [`uv`](https://docs.astral.sh/uv/). It runs the generator and the LinkML CLI
   tools (through `uvx`), so there's nothing to install by hand.
-- The data-dict CLI. There's no release yet, so build it from source (see [data-dict's docs](https://data-dict.tidyverse.org/) for details):
+- The `data-dict` CLI. There's no release yet, so build it from source (see [data-dict's docs](https://data-dict.tidyverse.org/) for details):
   ```bash
   cargo install --git https://github.com/tidyverse/data-dict data-dict-cli
   ```
@@ -34,10 +34,11 @@ dataset checks out under both toolchains.
 
 ## Running the validation
 
-Everything runs from this directory:
+Everything runs from this root directory:
 
 ```bash
-cd /Users/josh/Documents/experiments/data-dict_linkml
+git clone https://github.com/jat255/data-dict-linkml
+cd data-dict-linkml
 ```
 
 ### Part A: the LinkML side
@@ -46,15 +47,15 @@ Check the schema, then check a data instance against it.
 
 ```bash
 # lint the schema
-uvx --from linkml linkml-lint otters.linkml.yaml
+uvx linkml lint otters.linkml.yaml
 #   ✓ No problems found
 
 # validate the schema against the LinkML metamodel
-uvx --from linkml linkml-validate otters.linkml.yaml
+uvx linkml validate otters.linkml.yaml
 #   No issues found
 
 # validate a data instance against the schema
-uvx --from linkml linkml-validate -s otters.linkml.yaml -C Survey survey.data.yaml
+uvx linkml validate -s otters.linkml.yaml -C Survey survey.data.yaml
 #   No issues found
 ```
 
@@ -89,28 +90,41 @@ All three come back `ok`. If you want to see a validator actually reject
 something, bump a `weight` past 45 in `make_fixtures.py`, rerun it, and run
 `validate-data` again.
 
-## What I learned
+## Summary of findings
 
-The thing I got wrong at first was assuming data-dict needed real data to fill
-in `examples` and value ranges. It doesn't. Those are ordinary LinkML slot
-annotations (`examples:`, `minimum_value`, `maximum_value`), they're just easy to
-leave off. Once the schema carries them, the whole dictionary comes out valid
-with no data anywhere in sight.
+Generally speaking, a basic LinkML schema can reliably generate a
+data-dict representation without losing a ton of information. For example:
+data-dict allows each column to carry `values`, `range`, or `examples`, and
+all three map directly from ordinary LinkML slot annotations: 
+`permissible_values`, `minimum_value`/`maximum_value`, and
+`examples:`. A fully annotated schema is enough on its own. One potential snag is that
+`examples:` is optional in LinkML and easy to leave off; when a column is missing it, the
+generator flags that column, and you either add the examples to the schema or
+fill them from data.
 
-What genuinely doesn't survive the trip is anything semantic. data-dict has no
-place for URIs or ontology mappings, so those get dropped. It's also flat, so a
+Semantic information is not handled quite as cleanly. data-dict has no
+place for URIs or ontology mappings, so those get dropped. It's also flat
+(no inheritance, composition, etc.), so a
 LinkML abstract parent like `NamedThing` disappears and its fields get copied
-down into each table that inherited them. Neither is really a LinkML problem;
-data-dict just chose to stay lighter than that.
+down into each table that inherited them. This isn't really a problem, but more
+of a consequence of the data-dict design. There are plenty of LinkML generators
+(such as the JSON Schema generator) that have to generate concrete representations
+of inheritence, so this is fine for data-dict as well.
 
-The interesting part is the foreign key. LinkML says "this slot's value is a
-Territory" (a reference to another object). data-dict says "this is an FK column,
-and here's the join." The generator translates between the two. That split is
-also why there are two copies of the data: `survey.data.yaml` is the nested shape
+One interesting thing to note is how foreign keys are handled. LinkML says 
+"this slot's value is a `Territory`" (a reference to another object). 
+data-dict says "this is an FK column, and here's the join." The generator 
+translates between the two. That split is also why there are two copies of the 
+data: `survey.data.yaml` is the nested shape
 LinkML validates, and the Parquet files are the flat shape data-dict validates.
 Same rows either way.
 
-The [Findings](site/findings.qmd) page has the longer version.
+The [Findings](site/findings.qmd) page has some additional details.
+
+## TODO
+
+- [ ] Generalize this example beyond the otters schema to cover many prototypical LinkML schemas pulled from public sources, exercising the generator against a
+  wider range of real-world constructs.
 
 ## Docs site
 

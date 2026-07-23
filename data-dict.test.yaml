@@ -68,9 +68,7 @@ tables:
     description: Body mass at observation.
     type: number(quantity)
     units: kg
-    range:
-    - 0
-    - 45
+    range: [0, 45]
   - name: age_years
     description: Estimated age in whole years.
     type: number

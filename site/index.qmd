@@ -6,37 +6,55 @@ subtitle: "Generating a tidyverse data-dict.yaml from a LinkML schema"
 ## The question
 
 [LinkML](https://linkml.io/) is schema-first: you write one model and generate a
-pile of things from it, JSON Schema, SHACL, OWL, Pydantic, SQL DDL, and so on.
+various downstream artifacts from it: JSON Schema, SHACL, OWL, Pydantic, SQL DDL, and so on.
 The tidyverse [`data-dict`](https://data-dict.tidyverse.org/) project is a
 lighter YAML format for documenting and validating a dataset, with a Rust CLI to
 check it.
 
-The two formats describe a lot of the same stuff: tables, columns, types,
-constraints, relationships. So the obvious thing to try is generating one from
-the other. Could `data-dict.yaml` just be another LinkML output target?
+The two formats describe much of the same concepts: tables, columns, types,
+constraints, relationships. As data-dict is an emerging specification format,
+this example is an experiment to see if we can reliably generate data-dict.yaml
+schema definitions from LinkML schema source. Such a generator would certainly be
+helpful for data interoperability, and potentially expose more people to data-dict.
 
 ## Short answer
 
 Yes. The generator in this repo (`gen_data_dict.py`) reads a LinkML schema and
-writes a valid `data-dict.yaml` from it, without touching any data. The result
+writes a valid `data-dict.yaml` from it, without minimal data loss. The result
 passes all three data-dict validators, and the same dataset validates under both
 LinkML and data-dict, each in its own shape.
 
-## The shape of it
+## The gist of the example
 
+```{mermaid}
+%%{init: {'flowchart': {'rankSpacing': 90, 'nodeSpacing': 60}}}%%
+flowchart TD
+    src["<b>otters.linkml.yaml</b><br><i>source of truth (LinkML)</i>"]
+
+    src -->|"<code>linkml lint</code> / <code>linkml validate</code><br>(check the model and a data instance)"| gen{{"<code>gen_data_dict.py</code>"}}
+
+    gen --> dd["<b>data-dict.yaml</b><br><i>generated, portable</i>"]
+    gen --> ddtest["<b>data-dict.test.yaml</b><br><i><code>--emit-source</code> (adds source: pointers)</i>"]
+
+    dd -->|"<code>data-dict validate-spec</code>"| green(["✅ all green"])
+    ddtest -->|"<code>data-dict validate-meta</code> / <code>-data</code>"| green
+
+    classDef source fill:#e8f0fe,stroke:#4285f4,color:#1a1a1a;
+    classDef output fill:#f1f8e9,stroke:#7cb342,color:#1a1a1a;
+    classDef tool fill:#fff3e0,stroke:#fb8c00,color:#1a1a1a;
+    classDef done fill:#e8f5e9,stroke:#43a047,color:#1a1a1a;
+
+    class src source;
+    class dd,ddtest output;
+    class gen tool;
+    class green done;
 ```
-otters.linkml.yaml            source of truth (LinkML)
-        │
-        │  linkml-lint / linkml-validate     (check the model and a data instance)
-        │
-        ▼  gen_data_dict.py
-data-dict.yaml                generated, portable
-data-dict.test.yaml           generated with --emit-source (adds source: pointers)
-        │
-        │  data-dict validate-spec / -meta / -data
-        ▼
-     all green
-```
+
+## TODO
+
+- [ ] Generalize this example beyond the otters schema to cover many prototypical
+  LinkML schemas pulled from public sources, exercising the generator against a
+  wider range of real-world constructs.
 
 ## Where to go next
 
