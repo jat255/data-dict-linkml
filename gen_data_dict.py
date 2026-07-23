@@ -9,12 +9,10 @@
 """gen-data-dict: a proof-of-concept LinkML -> data-dict.yaml generator.
 
 Emits the *relational projection* of a LinkML schema as a data-dict.yaml
-($version 0.1.0), using ONLY the schema -- no data is read or assumed. A LinkML
-schema is normally authored before any data exists, so the generator must stand
-on the schema alone.
+($version 0.1.0).
 
-KEY LESSON (from data-dict's own validate_spec.rs, rule S07): each column type
-demands a specific representation, and LinkML can supply every one of them:
+Each data-dict column type wants a specific representation (per data-dict's
+validate_spec.rs, rule S07), and LinkML supplies each one:
 
     enum         -> `values`                 from `permissible_values`
     boolean      -> none of the three        trivially
@@ -23,12 +21,10 @@ demands a specific representation, and LinkML can supply every one of them:
     example types-> NON-EMPTY `examples`      from slot `examples:` (use
       (string, number, number(id))            `slot_usage` for per-table values)
 
-So a fully-annotated LinkML schema yields a COMPLETE, valid data-dict with zero
-data. Where the schema omits an `examples:` list or a bound, the generator emits
-the column as a flagged SCAFFOLD hole -- the fix is to annotate the LinkML, not
-to consult data.
+Where the schema omits an `examples:` list or a bound, the generator emits the
+column as a flagged SCAFFOLD hole; annotate the LinkML to close it.
 
-Genuinely irreducible losses (data-dict has no concept of these):
+Losses data-dict has no concept for:
   * URIs / prefixes / ontology mappings -> dropped.
   * Inheritance: abstract/mixin classes are NOT tables; their slots are
     FLATTENED into each concrete descendant via class_induced_slots().
@@ -42,9 +38,8 @@ Usage:
     python gen_data_dict.py SCHEMA.yaml --emit-source > data-dict.test.yaml
 
 --emit-source adds a `source: {parquet: <table>.parquet}` pointer to each table
-(convention: lowercased class name). This is a data *location*, not data itself,
-so it needs no data at generation time; it lets `validate-meta`/`validate-data`
-find the files. The default (no flag) stays portable and source-free.
+(convention: lowercased class name), so `validate-meta`/`validate-data` can find
+the files. The default (no flag) stays portable and source-free.
 """
 from __future__ import annotations
 
